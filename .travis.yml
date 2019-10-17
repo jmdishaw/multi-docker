@@ -1,0 +1,22 @@
+sudo: required
+services:
+- docker
+
+before_install:
+  - docker build -t jmdishaw/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true jmdishaw/react-test npm test
+
+after_success:
+  - docker build -t jmdishaw/multi-client ./client
+  - docker build -t jmdishaw/multi-nginx ./nginx
+  - docker build -t jmdishaw/multi-server ./server
+  - docker build -t jmdishaw/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push to DockerHub
+  - docker push jmdishaw/multi-client
+  - docker push jmdishaw/multi-nginx
+  - docker push jmdishaw/multi-server
+  - docker push jmdishaw/multi-worker
